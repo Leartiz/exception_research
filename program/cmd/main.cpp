@@ -14,8 +14,9 @@
 
 struct Environment final
 {
+    static const int run_count = 5;
     static const int equation_count = 1000000;
-    static const int exception_count = 10;
+    static const int exception_count = 1;
 
     static const std::vector<int> exception_case_indexs;
     static const std::vector<int> build_exception_case_indexs() {
@@ -39,6 +40,9 @@ struct Environment final
 
 const std::vector<int> Environment::exception_case_indexs =
     build_exception_case_indexs();
+
+// utils
+// -----------------------------------------------------------------------
 
 bool isEqual(double a, double b, double eps = 0.00001) {
     return abs(a-b) < eps;
@@ -65,6 +69,8 @@ std::tuple<double, double, double>
 enum class FunctionType {
     NoException, Normal, FullException
 };
+
+// -----------------------------------------------------------------------
 
 //! решение уравнения при a, b, c одновременно не равных нулю
 std::vector<double> solve_correct_equation(double a, double b, double c) noexcept {
@@ -126,6 +132,8 @@ void solve_full_exception(double a, double b, double c) {
     throw solve_correct_equation(a, b, c); // lvalue?
 }
 
+// -----------------------------------------------------------------------
+
 double roots_sum_no_exception(double a, double b, double c) noexcept {
     bool ok;
     auto roots = solve_no_exception(a, b, c, ok);
@@ -162,6 +170,8 @@ double roots_sum_full_exception(double a, double b, double c) {
         ); // impossible.
 }
 
+// -----------------------------------------------------------------------
+
 //! вызывает функцию в соответствии с типом
 double call_solver(FunctionType type, double a, double b, double c) noexcept {
     static const std::map<
@@ -177,7 +187,7 @@ double call_solver(FunctionType type, double a, double b, double c) noexcept {
     return type2function.at(type)(a, b, c);
 }
 
-void run(long long n, FunctionType type) noexcept {
+long long run(long long n, FunctionType type) noexcept {
     using namespace std::chrono;
     const auto begin = steady_clock::now();
 
@@ -189,10 +199,11 @@ void run(long long n, FunctionType type) noexcept {
     }
 
     const auto end = steady_clock::now();
-    const auto elapsed_ms = duration_cast<microseconds>(end - begin);
-    std::cout << n << "\t" << elapsed_ms.count() << std::endl;
+    const auto elapsed_us = duration_cast<microseconds>(end - begin);
 
     static_cast<void>(sum);
+    return
+        elapsed_us.count();
 }
 
 int main() {
@@ -204,13 +215,56 @@ int main() {
     std::cout << "num_threads: " << omp_get_num_threads() << '\n';
 #endif
 
+    std::map<FunctionType, std::vector<long long>> results;
+    results[FunctionType::Normal].reserve(Environment::run_count);
+    results[FunctionType::NoException].reserve(Environment::run_count);
+    results[FunctionType::FullException].reserve(Environment::run_count);
+
+    const auto n = Environment::equation_count;
+    for (int i = 0; i < Environment::run_count; ++i) {
+        long long elapsed_us{ 0 };
+
+        //std::cout << "\t\t\t--------No exception-----------" << std::endl;
+        elapsed_us = run(n, FunctionType::NoException);
+        results[FunctionType::NoException].push_back(elapsed_us);
+        //std::cout << n << "\t" << elapsed_us << std::endl;
+
+        //std::cout << "\t\t\t--------Normal-----------" << std::endl;
+        elapsed_us = run(n, FunctionType::Normal);
+        results[FunctionType::Normal].push_back(elapsed_us);
+        //std::cout << n << "\t" << elapsed_us << std::endl;
+
+        //std::cout << "\t\t\t--------Full exception-----------" << std::endl;
+        elapsed_us = run(n, FunctionType::FullException);
+        results[FunctionType::FullException].push_back(elapsed_us);
+        //std::cout << n << "\t" << elapsed_us << std::endl;
+    }
+
+    // ***
+
     std::cout << "n\ttime (us)" << std::endl;
+
+    const auto& vec_no_exc = results[FunctionType::NoException];
+    const auto avg_no_exc_us = std::accumulate(
+                                   vec_no_exc.begin(),
+                                   vec_no_exc.end(),
+                                   0) / double(vec_no_exc.size());
     std::cout << "\t\t\t--------No exception-----------" << std::endl;
-    run(Environment::equation_count, FunctionType::NoException);
+    std::cout << n << "\t" << avg_no_exc_us << std::endl;
 
+    const auto& vec_normal = results[FunctionType::Normal];
+    const auto avg_normal_us = std::accumulate(
+                                   vec_normal.begin(),
+                                   vec_normal.end(),
+                                   0) / double(vec_normal.size());
     std::cout << "\t\t\t--------Normal-----------" << std::endl;
-    run(Environment::equation_count, FunctionType::Normal);
+    std::cout << n << "\t" << avg_normal_us << std::endl;
 
+    const auto& vec_full_exc = results[FunctionType::FullException];
+    const auto avg_full_exc_us = std::accumulate(
+                                     vec_full_exc.begin(),
+                                     vec_full_exc.end(),
+                                     0) / vec_full_exc.size();
     std::cout << "\t\t\t--------Full exception-----------" << std::endl;
-    run(Environment::equation_count, FunctionType::FullException);
+    std::cout << n << "\t" << avg_full_exc_us << std::endl;
 }
