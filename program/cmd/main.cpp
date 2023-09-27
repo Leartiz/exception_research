@@ -1,0 +1,216 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <exception>
+#include <functional>
+#include <chrono>
+#include <numeric>
+#include <cassert>
+#include <cmath>
+#include <tuple>
+
+#include "omp.h"
+
+struct Environment final
+{
+    static const int equation_count = 1000000;
+    static const int exception_count = 10;
+
+    static const std::vector<int> exception_case_indexs;
+    static const std::vector<int> build_exception_case_indexs() {
+        const int cap = exception_count;
+        std::vector<int> result; result.reserve(cap);
+        for (int i = 1; i <= cap; ++i) {
+            result.push_back(
+                equation_count / i);
+        }
+        std::sort(result.begin(), result.end());
+        return result;
+    }
+    static bool is_exception_case_index(const int index) {
+        return std::binary_search(
+            exception_case_indexs.begin(),
+            exception_case_indexs.end(),
+            index
+            );
+    }
+};
+
+const std::vector<int> Environment::exception_case_indexs =
+    build_exception_case_indexs();
+
+bool isEqual(double a, double b, double eps = 0.00001) {
+    return abs(a-b) < eps;
+}
+
+double sum_vec(const std::vector<double>& vec) {
+    return std::accumulate(vec.begin(), vec.end(), 0);
+}
+
+std::tuple<double, double, double>
+    generate_coeffs(const int index) {
+    if (!Environment::is_exception_case_index(index)) {
+        return {
+            ((index % 2000) - 1000) / 33.0,
+            ((index % 200) - 100) / 22.0,
+            ((index % 20) - 10) / 11.0
+        };
+    }
+    else {
+        return { 0, 0, 0 };
+    }
+}
+
+enum class FunctionType {
+    NoException, Normal, FullException
+};
+
+//! решение уравнения при a, b, c одновременно не равных нулю
+std::vector<double> solve_correct_equation(double a, double b, double c) noexcept {
+    assert(
+        !(
+            isEqual(a, 0) &&
+            isEqual(b, 0) &&
+            isEqual(c, 0)
+            )
+        );
+
+    if (isEqual(a, 0) && isEqual(b, 0)) {
+        return std::vector<double>(0);
+    }
+
+    if (isEqual(a,0)) {
+        return std::vector<double>{ 0, -c/b };
+    }
+
+    const double discriminant = (b*b) - (4*a*c);
+
+    if (isEqual(discriminant, 0)) {
+        return std::vector<double>{ 0, -b/(2*a) };
+    }
+    if (discriminant < 0) {
+        return std::vector<double>(0);
+    }
+
+    return std::vector<double>{
+        (-b + sqrt(discriminant)) / (2 * a),
+        (-b - sqrt(discriminant)) / (2 * a)
+    };
+}
+
+std::vector<double> solve_no_exception(double a, double b, double c, bool& ok) noexcept {
+    ok = true;
+
+    if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
+        ok = false;
+        return std::vector<double>(0);
+    }
+
+    return solve_correct_equation(a, b, c);
+}
+
+std::vector<double> solve(double a, double b, double c) {
+    if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
+        throw std::logic_error("root is any value");
+    }
+
+    return solve_correct_equation(a, b, c);
+}
+
+void solve_full_exception(double a, double b, double c) {
+    if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
+        throw std::logic_error("root is any value");
+    }
+
+    throw solve_correct_equation(a, b, c); // lvalue?
+}
+
+double roots_sum_no_exception(double a, double b, double c) noexcept {
+    bool ok;
+    auto roots = solve_no_exception(a, b, c, ok);
+    if (true == ok) {
+        return sum_vec(roots);
+    }
+    return 0;
+}
+
+double roots_sum(double a, double b, double c) noexcept {
+    try {
+        auto roots = solve(a, b, c);
+        return sum_vec(roots);
+    }
+    catch(std::logic_error& err) {
+        static_cast<void>(err);
+        return 0;
+    }
+}
+
+double roots_sum_full_exception(double a, double b, double c) {
+    try {
+        solve_full_exception(a, b, c);
+    }
+    catch(std::logic_error& err) {
+        static_cast<void>(err);
+        return 0;
+    }
+    catch(std::vector<double>& roots) {
+        return sum_vec(roots);
+    }
+    throw std::runtime_error(
+        "wrong exception type"
+        ); // impossible.
+}
+
+//! вызывает функцию в соответствии с типом
+double call_solver(FunctionType type, double a, double b, double c) noexcept {
+    static const std::map<
+        FunctionType,
+        std::function<
+            double(double, double, double)>
+        > type2function = {
+            { FunctionType::NoException, roots_sum_no_exception },
+            { FunctionType::Normal, roots_sum },
+            { FunctionType::FullException, roots_sum_full_exception }
+        };
+
+    return type2function.at(type)(a, b, c);
+}
+
+void run(long long n, FunctionType type) noexcept {
+    using namespace std::chrono;
+    const auto begin = steady_clock::now();
+
+    double sum{ 0 };
+//#pragma omp parallel for reduction (+: sum)
+    for (long long i = 0; i < n; i++) {
+        const auto [a, b, c] = generate_coeffs(i);
+        sum += call_solver(type, a, b, c);
+    }
+
+    const auto end = steady_clock::now();
+    const auto elapsed_ms = duration_cast<microseconds>(end - begin);
+    std::cout << n << "\t" << elapsed_ms.count() << std::endl;
+
+    static_cast<void>(sum);
+}
+
+int main() {
+#ifdef _OPENMP
+    std::cout << "OpenMP is supported!\n";
+
+    //omp_set_num_threads(8);
+    std::cout << "max_threads: " << omp_get_max_threads() << '\n';
+    std::cout << "num_threads: " << omp_get_num_threads() << '\n';
+#endif
+
+    std::cout << "n\ttime (us)" << std::endl;
+    std::cout << "\t\t\t--------No exception-----------" << std::endl;
+    run(Environment::equation_count, FunctionType::NoException);
+
+    std::cout << "\t\t\t--------Normal-----------" << std::endl;
+    run(Environment::equation_count, FunctionType::Normal);
+
+    std::cout << "\t\t\t--------Full exception-----------" << std::endl;
+    run(Environment::equation_count, FunctionType::FullException);
+}
