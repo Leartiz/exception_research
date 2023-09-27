@@ -11,10 +11,18 @@ void routine()
         std::chrono::seconds(
             dur));
 
-    const int id = omp_get_thread_num();
+#pragma omp critical (write_some)
+    {
+        std::cout << '.' << std::endl;
+    }
+
+    const int id =
+        omp_get_thread_num();
+
+    // correct to use std::exception_ptr...
     if (id == 3) {
         throw std::runtime_error{
-            "failed"
+            "something wrong"
         };
     }
 }
@@ -22,7 +30,7 @@ void routine()
 int main()
 {
     try {
-#pragma omp parallel num_threads(4)
+#pragma omp parallel num_threads(6)
         {
             routine();
         }

@@ -8,6 +8,7 @@
 ## Experiments
 
 ### OpenMP
-- `parallel [num_threads]; critical` [here](./experiments/n1/main.cpp)
-- `parallel [num_threads]; critical; nested` [here](./experiments/n2/main.cpp)
-- `one thread - one file` [here](./experiments/n3/main.cpp)
+- n1 - `parallel [num_threads]; critical` [here](./experiments/n1/main.cpp)
+- n2 - `parallel [num_threads]; critical; nested` [here](./experiments/n2/main.cpp)
+- n3 - one thread - one file [here](./experiments/n3/main.cpp)
+- n4 - exception from thread [here](./experiments/n4/main.cpp)
