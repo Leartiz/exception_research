@@ -1,16 +1,15 @@
 #include <functional>
 #include <stdexcept>
 
-// ---> https://godbolt.org/z/oKsabfY34
+// ---> https://godbolt.org/z/qcKTfKGdP
 
 int foo() {
-    if (std::rand() % 2 == 0) {
-        throw std::runtime_error("some err");
-    }
+    throw std::runtime_error("");
     return 0;
 }
 
 int main() {
+
     try {
         static_cast<void>(foo());
     }

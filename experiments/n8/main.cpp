@@ -10,7 +10,7 @@ void print(const std::vector<int>& vec)
 
 int main()
 {
-    std::vector<int> vec{0};
+    std::vector<int> vec{ 0 };
     print(vec);
     return 0;
 }

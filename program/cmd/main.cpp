@@ -242,6 +242,10 @@ int main() {
 
     // ***
 
+    std::cout << "run_count: " << Environment::run_count << std::endl;
+    std::cout << "equation_count: " << Environment::equation_count << std::endl;
+    std::cout << "exception_count: " << Environment::exception_count << std::endl;
+
     std::cout << "n\ttime (us)" << std::endl;
 
     const auto& vec_no_exc = results[FunctionType::NoException];
