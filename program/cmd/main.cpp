@@ -192,7 +192,7 @@ long long run(long long n, FunctionType type) noexcept {
     const auto begin = steady_clock::now();
 
     double sum{ 0 };
-//#pragma omp parallel for reduction (+: sum)
+#pragma omp parallel for reduction (+: sum)
     for (long long i = 0; i < n; i++) {
         const auto [a, b, c] = generate_coeffs(i);
         sum += call_solver(type, a, b, c);
