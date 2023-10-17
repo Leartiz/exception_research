@@ -15,7 +15,7 @@
 struct Environment final
 {
     static const int run_count = 5;
-    static const int equation_count = 1000000;
+    static const int equation_count = 1'000'000;
     static const int exception_count = 1;
 
     static const std::vector<int> exception_case_indexs;
