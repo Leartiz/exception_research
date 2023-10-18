@@ -14,9 +14,9 @@
 
 struct Environment final
 {
-    static const int run_count = 5;
-    static const int equation_count = 1'000'000;
-    static const int exception_count = 1;
+    static const int run_count = 10;
+    static const int equation_count = 3'000'000;
+    static const int exception_count = 500;
 
     static const std::vector<int> exception_case_indexs;
     static const std::vector<int> build_exception_case_indexs() {
@@ -24,17 +24,18 @@ struct Environment final
         std::vector<int> result; result.reserve(cap);
         for (int i = 1; i <= cap; ++i) {
             result.push_back(
-                equation_count / i);
+                equation_count / i - 1);
         }
         std::sort(result.begin(), result.end());
         return result;
     }
+
     static bool is_exception_case_index(const int index) {
         return std::binary_search(
-            exception_case_indexs.begin(),
-            exception_case_indexs.end(),
-            index
-            );
+                    exception_case_indexs.begin(),
+                    exception_case_indexs.end(),
+                    index
+                    );
     }
 };
 
@@ -86,14 +87,14 @@ std::vector<double> solve_correct_equation(double a, double b, double c) noexcep
         return std::vector<double>(0);
     }
 
-    if (isEqual(a,0)) {
-        return std::vector<double>{ 0, -c/b };
+    if (isEqual(a, 0)) {
+        return std::vector<double>{ -c/b };
     }
 
     const double discriminant = (b*b) - (4*a*c);
 
     if (isEqual(discriminant, 0)) {
-        return std::vector<double>{ 0, -b/(2*a) };
+        return std::vector<double>{ -b/(2*a) };
     }
     if (discriminant < 0) {
         return std::vector<double>(0);
