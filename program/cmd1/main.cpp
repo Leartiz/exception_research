@@ -12,11 +12,13 @@
 
 #include "omp.h"
 
-struct Environment final
+struct LaunchParams final
 {
     static const int run_count = 5;
-    static const int equation_count = 1'000'000;
+    static const int equation_count = 5'000;
     static const int exception_count = 1;
+
+    // ***
 
     static const std::vector<int> exception_case_indexs;
     static const std::vector<int> build_exception_case_indexs() {
@@ -29,6 +31,7 @@ struct Environment final
         std::sort(result.begin(), result.end());
         return result;
     }
+
     static bool is_exception_case_index(const int index) {
         return std::binary_search(
             exception_case_indexs.begin(),
@@ -38,14 +41,14 @@ struct Environment final
     }
 };
 
-const std::vector<int> Environment::exception_case_indexs =
+const std::vector<int> LaunchParams::exception_case_indexs =
     build_exception_case_indexs();
 
 // utils
 // -----------------------------------------------------------------------
 
 bool isEqual(double a, double b, double eps = 0.00001) {
-    return abs(a-b) < eps;
+    return abs(a - b) < eps;
 }
 
 double sum_vec(const std::vector<double>& vec) {
@@ -54,7 +57,7 @@ double sum_vec(const std::vector<double>& vec) {
 
 std::tuple<double, double, double>
 generate_coeffs(const int index) {
-    if (!Environment::is_exception_case_index(index)) {
+    if (!LaunchParams::is_exception_case_index(index)) {
         return {
             ((index % 2000) - 1000) / 33.0,
             ((index % 200) - 100) / 22.0,
@@ -83,20 +86,20 @@ std::vector<double> solve_correct_equation(double a, double b, double c) noexcep
         );
 
     if (isEqual(a, 0) && isEqual(b, 0)) {
-        return std::vector<double>(0);
+        return std::vector<double>();
     }
 
     if (isEqual(a,0)) {
-        return std::vector<double>{ 0, -c/b };
+        return std::vector<double>{ 0, -c / b };
     }
 
-    const double discriminant = (b*b) - (4*a*c);
+    const double discriminant = (b * b) - (4 * a * c);
 
     if (isEqual(discriminant, 0)) {
-        return std::vector<double>{ 0, -b/(2*a) };
+        return std::vector<double>{ 0, -b / (2 * a) };
     }
     if (discriminant < 0) {
-        return std::vector<double>(0);
+        return std::vector<double>();
     }
 
     return std::vector<double>{
@@ -104,6 +107,8 @@ std::vector<double> solve_correct_equation(double a, double b, double c) noexcep
         (-b - sqrt(discriminant)) / (2 * a)
     };
 }
+
+// -----------------------------------------------------------------------
 
 std::vector<double> solve_no_exception(double a, double b, double c, bool& ok) noexcept {
     ok = true;
@@ -187,6 +192,27 @@ double call_solver(FunctionType type, double a, double b, double c) noexcept {
     return type2function.at(type)(a, b, c);
 }
 
+// starts
+// -----------------------------------------------------------------------
+
+long long run(long long n, FunctionType type) noexcept;
+void some_runs(std::map<FunctionType, std::vector<long long>>& results) noexcept
+{
+    const auto n = LaunchParams::equation_count;
+    for (int i = 0; i < LaunchParams::run_count; ++i) {
+        long long elapsed_us{ 0 };
+
+        elapsed_us = run(n, FunctionType::NoException);
+        results[FunctionType::NoException].push_back(elapsed_us);
+
+        elapsed_us = run(n, FunctionType::Normal);
+        results[FunctionType::Normal].push_back(elapsed_us);
+
+        elapsed_us = run(n, FunctionType::FullException);
+        results[FunctionType::FullException].push_back(elapsed_us);
+    }
+}
+
 long long run(long long n, FunctionType type) noexcept {
     using namespace std::chrono;
     const auto begin = steady_clock::now();
@@ -201,50 +227,42 @@ long long run(long long n, FunctionType type) noexcept {
     const auto end = steady_clock::now();
     const auto elapsed_us = duration_cast<microseconds>(end - begin);
 
+    std::cout << "typeid: " <<  typeid(elapsed_us).name() << " - " << typeid(long long).name();
+
     static_cast<void>(sum);
     return
         elapsed_us.count();
 }
 
-int main() {
+void println_about_openmp()
+{
 #ifdef _OPENMP
     std::cout << "OpenMP is supported!\n";
 
-    //omp_set_num_threads(8);
     std::cout << "max_threads: " << omp_get_max_threads() << '\n';
     std::cout << "num_threads: " << omp_get_num_threads() << '\n';
 #endif
+}
+
+
+int main() {
+    println_about_openmp();
 
     std::map<FunctionType, std::vector<long long>> results;
-    results[FunctionType::Normal].reserve(Environment::run_count);
-    results[FunctionType::NoException].reserve(Environment::run_count);
-    results[FunctionType::FullException].reserve(Environment::run_count);
-
-    const auto n = Environment::equation_count;
-    for (int i = 0; i < Environment::run_count; ++i) {
-        long long elapsed_us{ 0 };
-
-        //std::cout << "\t\t\t--------No exception-----------" << std::endl;
-        elapsed_us = run(n, FunctionType::NoException);
-        results[FunctionType::NoException].push_back(elapsed_us);
-        //std::cout << n << "\t" << elapsed_us << std::endl;
-
-        //std::cout << "\t\t\t--------Normal-----------" << std::endl;
-        elapsed_us = run(n, FunctionType::Normal);
-        results[FunctionType::Normal].push_back(elapsed_us);
-        //std::cout << n << "\t" << elapsed_us << std::endl;
-
-        //std::cout << "\t\t\t--------Full exception-----------" << std::endl;
-        elapsed_us = run(n, FunctionType::FullException);
-        results[FunctionType::FullException].push_back(elapsed_us);
-        //std::cout << n << "\t" << elapsed_us << std::endl;
-    }
+    results[FunctionType::Normal].reserve(LaunchParams::run_count);
+    results[FunctionType::NoException].reserve(LaunchParams::run_count);
+    results[FunctionType::FullException].reserve(LaunchParams::run_count);
 
     // ***
 
-    std::cout << "run_count: " << Environment::run_count << std::endl;
-    std::cout << "equation_count: " << Environment::equation_count << std::endl;
-    std::cout << "exception_count: " << Environment::exception_count << std::endl;
+    const auto n = LaunchParams::equation_count;
+    some_runs(results);
+
+    // ***
+
+    std::cout << "run_count: " << LaunchParams::run_count << std::endl;
+    std::cout << "equation_count: " << LaunchParams::equation_count << std::endl;
+    std::cout << "exception_count: " << LaunchParams::exception_count << std::endl;
 
     std::cout << "n\ttime (us)" << std::endl;
 

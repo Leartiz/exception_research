@@ -2,10 +2,30 @@
 
 ## Measurements v1
 
-||Компилятор|Столбец 3|
-|-|-|---|
-|Последовательная|Запись в столбце 2|Запись в столбце 3|
-|Параллельная|Запись в столбце 2|Запись в столбце 3|
+### Program: *cmd*
+- See [here](./program/cmd/main.cpp)
+
+<table>
+    <tr>
+        <td rowspan="2"> 
+            <b>№</b>
+        </td>
+        <td rowspan="2">
+            <b>Type</b>
+        </td>
+        <td rowspan="1" colspan="2">
+            <b>Без исключений/При ошибке/Всегда в мс.</b>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            d
+        </td>
+        <td>
+        d
+        </td>
+    </tr>
+</table>
 
 ## Experiments
 
