@@ -9,13 +9,14 @@
 #include <cassert>
 #include <cmath>
 #include <tuple>
+#include <iomanip>
 
 #include "omp.h"
 
 struct LaunchParams final
 {
     static const size_t run_count = 5;
-    static const size_t equation_count = 5'000;
+    static const size_t equation_count = 3'000'000;
     static const size_t exception_count = 1;
 
     // ***
@@ -214,7 +215,7 @@ void println_one_result(const std::vector<long long>& vec, const std::string& ti
     const auto avg = std::accumulate(vec.begin(), vec.end(),
                                      0) / double(vec.size());
     std::cout << title << std::endl;
-    std::cout << "\t" << avg << std::endl;
+    std::cout << "\t" << std::setprecision(25) << avg << std::endl;
 }
 
 void println_results(std::map<FunctionType, std::vector<long long>>& results)
@@ -240,7 +241,7 @@ long long run(size_t n, FunctionType type) noexcept {
     const auto begin = steady_clock::now();
 
     double sum{ 0 };
-#pragma omp parallel for reduction (+: sum)
+//#pragma omp parallel for reduction (+: sum)
     for (size_t i = 0; i < n; i++) {
         const auto [a, b, c] = generate_coeffs(i);
         sum += call_solver(type, a, b, c);
