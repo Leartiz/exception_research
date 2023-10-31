@@ -1,11 +1,4 @@
-<style>
-	table.iksweb{text-decoration: none;border-collapse:collapse;width:100%;text-align:center;}
-	table.iksweb th{font-weight:normal;font-size:14px; color:#ffffff;background-color:#354251;}
-	table.iksweb td{font-size:13px;color:#354251;}
-	table.iksweb td,table.iksweb th{white-space:pre-wrap;padding:10px 5px;line-height:13px;vertical-align: middle;border: 1px solid #354251;}
-	table.iksweb tr:hover{background-color:#f9fafb}
-	table.iksweb tr:hover td{color:#354251;cursor:default;}
-</style>
+<link rel="stylesheet" type="text/css" media="all" href="styles.css" />
 
 <table class="iksweb">
 	<tbody>
