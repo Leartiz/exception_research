@@ -17,7 +17,7 @@ struct LaunchParams final
 {
     static const size_t run_count = 5;
     static const size_t equation_count = 3'000'000;
-    static const size_t exception_count = 1;
+    static const size_t exception_count = 750'000;
 
     // ***
 
@@ -241,8 +241,9 @@ long long run(size_t n, FunctionType type) noexcept {
     const auto begin = steady_clock::now();
 
     double sum{ 0 };
-//#pragma omp parallel for reduction (+: sum)
-    for (size_t i = 0; i < n; i++) {
+    const int signed_n = static_cast<int>(n);
+#pragma omp parallel for reduction (+: sum)
+    for (int i = 0; i < signed_n; i++) {
         const auto [a, b, c] = generate_coeffs(i);
         sum += call_solver(type, a, b, c);
     }
@@ -277,7 +278,7 @@ void println_launch_params()
 
     std::cout << "exceptions percentage: "
               << double(LaunchParams::exception_count) /
-                     (LaunchParams::equation_count)
+                     (LaunchParams::equation_count) * 100
               << std::endl;
     std::cout << std::endl;
 }
