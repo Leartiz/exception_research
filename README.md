@@ -1,13 +1,11 @@
 # Exception Research
 
 ## Results
-### v0
-- Program *cmd* [here](./program/cmd/main.cpp)
-- Results [here](./measurements/v0/table.md)
+### Program *cmd* [here](./program/cmd/main.cpp)
+- Results v0 [here](./measurements/v0/tables.md)
+- Results v1 [here](./measurements/v1/tables.md)
 
-### v1
-- Program *cmd1* [here](./program/cmd/main.cpp)
-- Results [here](./measurements/v1/table.md)
+### Program *cmd1* [here](./program/cmd/main.cpp)
 
 ## Experiments
 
