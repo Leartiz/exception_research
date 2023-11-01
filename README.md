@@ -2,8 +2,8 @@
 
 ## Results
 ### Program *cmd* [here](./program/cmd/main.cpp)
-- Results v0 [here](./measurements/v0/tables.md)
-- Results v1 [here](./measurements/v1/tables.md)
+- Results v0 [here](./measurements/cmd/v0/tables.md)
+- Results v1 [here](./measurements/cmd/v1/tables.md)
 
 ### Program *cmd1* [here](./program/cmd/main.cpp)
 
