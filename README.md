@@ -28,3 +28,7 @@
 
 ## Useful links
 - Table generator for the site // IKSWEB / URL: https://iksweb.ru/tools/generator-table-html/
+- Соглашения о вызовах (calling convention) // whowh0 / URL: https://habr.com/ru/articles/675774/
+- Печальная правда о пропуске копий в C++ // Bright_Translate / URL: https://habr.com/ru/companies/ruvds/articles/551782/
+- Zero cost exception handling vs setjmp/longjmp // stackoverflow / URL: https://stackoverflow.com/questions/4975504/zero-cost-exception-handling-vs-setjmp-longjmp
+- Exception handling performance // janvorli / URL: https://github.com/dotnet/runtime/issues/77568?ysclid=lomh73ni1e5644794
