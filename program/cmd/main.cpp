@@ -17,15 +17,19 @@ struct LaunchParams final
 {
     static const size_t run_count = 5;
     static const size_t equation_count = 3'000'000;
-    static const size_t exception_count = 750'000;
+    static const size_t exception_count = 3000000;
 
     // ***
 
     static const std::vector<int> exception_case_indexs;
     static const std::vector<int> build_exception_case_indexs() {
-        const auto cap = exception_count;
-        std::vector<int> result; result.reserve(cap);
-        for (size_t i = 1; i <= cap; ++i) {
+        if (exception_count == 0) {
+            return {};
+        }
+
+        std::vector<int> result;
+        result.reserve(exception_count);
+        for (size_t i = 1; i <= exception_count; ++i) {
             result.push_back(
                 equation_count / i);
         }
@@ -242,6 +246,7 @@ long long run(size_t n, FunctionType type) noexcept {
 
     double sum{ 0 };
     const int signed_n = static_cast<int>(n);
+
 #pragma omp parallel for reduction (+: sum)
     for (int i = 0; i < signed_n; i++) {
         const auto [a, b, c] = generate_coeffs(i);
