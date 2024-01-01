@@ -1,17 +1,22 @@
 #include <iostream>
-#include <algorithm>
-#include <vector>
-#include <map>
-#include <exception>
-#include <functional>
-#include <chrono>
-#include <numeric>
-#include <cassert>
-#include <cmath>
-#include <tuple>
 #include <iomanip>
 
-#include "omp.h"
+#include <cassert>
+#include <exception>
+
+#include <algorithm>
+#include <functional>
+#include <numeric>
+#include <cmath>
+
+#include <chrono>
+#include <vector>
+#include <tuple>
+#include <map>
+
+#include <omp.h>
+
+#include "argh.h"
 
 struct LaunchParams final
 {

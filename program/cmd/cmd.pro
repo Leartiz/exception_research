@@ -16,3 +16,7 @@ msvc:message("msvc")
 
 SOURCES += \
         main.cpp
+
+INCLUDEPATH += \
+    ../../dependency
+

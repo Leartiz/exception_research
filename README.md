@@ -1,5 +1,14 @@
 # Exception Research
 
+## Launch
+
+- --run_count `<unsigned integer>`
+- --equation_count `<unsigned integer>`
+- --exception_count `<unsigned integer>`
+- --type `<parallel|sequential>`
+
+Edit launch script [here](./launch/main.py)
+
 ## Results
 ### Program *cmd* [here](./program/cmd/main.cpp)
 - Results v0 [here](./measurements/cmd/v0/tables.md)
