@@ -2,14 +2,17 @@
 
 ## Launch
 
-- --run_count `<unsigned integer>`
-- --equation_count `<unsigned integer>`
-- --exception_count `<unsigned integer>`
-- --type `<parallel|sequential>`
+- -rc, --run_count `<unsigned integer>` = 1
+- -rt, --run_type `<parallel|sequential>` = `sequential`
+- -mtc, --max_thread_count `<unsigned integer>` = `depends on processor`
+- -ec, --equation_count `<unsigned integer>` = 1000
+- -ep, --error_percentage `<0..100>` = 5.0
+- -tu, --time_unit `s|ms|us` = `us`
 
 Edit launch script [here](./launch/main.py)
 
 ## Results
+
 ### Program *cmd* [here](./program/cmd/main.cpp)
 - Results v0 [here](./measurements/cmd/v0/tables.md)
 - Results v1 [here](./measurements/cmd/v1/tables.md)
@@ -34,6 +37,9 @@ Edit launch script [here](./launch/main.py)
 - n9 - vector/error creation time [here](./experiments/n9/main.cpp)
 - n10 - code analysis with exceptions [here](./experiments/n10/main.cpp)
 - n11 - vector/error throw time [here](./experiments/n11/main.cpp)
+
+#### + [Argh!](https://github.com/adishavit/argh)
+- n15 - parse command line params [here](./experiments/n15/main.cpp)
 
 ## Useful links
 - Table generator for the site // IKSWEB / URL: https://iksweb.ru/tools/generator-table-html/

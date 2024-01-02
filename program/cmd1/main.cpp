@@ -47,7 +47,7 @@ const std::vector<int> LaunchParams::exception_case_indexs =
 // utils
 // -----------------------------------------------------------------------
 
-bool isEqual(double a, double b, double eps = 0.00001) {
+bool double_equals(double a, double b, double eps = 0.00001) {
     return abs(a - b) < eps;
 }
 
@@ -56,7 +56,7 @@ double sum_vec(const std::vector<double>& vec) {
 }
 
 std::tuple<double, double, double>
-generate_coeffs(const int index) {
+generate_coeffs(const long long index) {
     if (!LaunchParams::is_exception_case_index(index)) {
         return {
             ((index % 2000) - 1000) / 33.0,
@@ -79,23 +79,23 @@ enum class FunctionType {
 std::vector<double> solve_correct_equation(double a, double b, double c) noexcept {
     assert(
         !(
-            isEqual(a, 0) &&
-            isEqual(b, 0) &&
-            isEqual(c, 0)
+            double_equals(a, 0) &&
+            double_equals(b, 0) &&
+            double_equals(c, 0)
             )
         );
-
-    if (isEqual(a, 0) && isEqual(b, 0)) {
+    
+    if (double_equals(a, 0) && double_equals(b, 0)) {
         return std::vector<double>();
     }
-
-    if (isEqual(a,0)) {
+    
+    if (double_equals(a,0)) {
         return std::vector<double>{ 0, -c / b };
     }
 
     const double discriminant = (b * b) - (4 * a * c);
-
-    if (isEqual(discriminant, 0)) {
+    
+    if (double_equals(discriminant, 0)) {
         return std::vector<double>{ 0, -b / (2 * a) };
     }
     if (discriminant < 0) {
@@ -112,8 +112,8 @@ std::vector<double> solve_correct_equation(double a, double b, double c) noexcep
 
 std::vector<double> solve_no_exception(double a, double b, double c, bool& ok) noexcept {
     ok = true;
-
-    if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
+    
+    if (double_equals(a, 0) && double_equals(b, 0) && double_equals(c, 0)) {
         ok = false;
         return std::vector<double>(0);
     }
@@ -122,7 +122,7 @@ std::vector<double> solve_no_exception(double a, double b, double c, bool& ok) n
 }
 
 std::vector<double> solve(double a, double b, double c) {
-    if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
+    if (double_equals(a, 0) && double_equals(b, 0) && double_equals(c, 0)) {
         throw std::logic_error("root is any value");
     }
 
@@ -130,7 +130,7 @@ std::vector<double> solve(double a, double b, double c) {
 }
 
 void solve_full_exception(double a, double b, double c) {
-    if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
+    if (double_equals(a, 0) && double_equals(b, 0) && double_equals(c, 0)) {
         throw std::logic_error("root is any value");
     }
 
@@ -259,7 +259,7 @@ int main() {
     some_runs(results);
 
     // ***
-
+    
     std::cout << "run_count: " << LaunchParams::run_count << std::endl;
     std::cout << "equation_count: " << LaunchParams::equation_count << std::endl;
     std::cout << "exception_count: " << LaunchParams::exception_count << std::endl;

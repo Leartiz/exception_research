@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <functional>
 #include <numeric>
+#include <cctype>
 #include <cmath>
 
 #include <chrono>
@@ -18,15 +19,71 @@
 
 #include "argh.h"
 
+bool string_equals(std::string lhs, std::string rhs);
+
 struct LaunchParams final
 {
-    static const size_t run_count = 5;
-    static const size_t equation_count = 3'000'000;
-    static const size_t exception_count = 3000000;
+    enum Type { sequential, parallel };
+    static std::string type_to_str(const Type tp) {
+        switch (tp) {
+        case parallel: return "parallel";
+        default: return "sequential";
+        }
+    }
 
-    // ***
+    static double str_to_time_ratio(const std::string& str) {
+        if (string_equals(str, "s")) return 1'000'000;
+        if (string_equals(str, "ms")) return 1'000;
+        return 1;
+    }
 
-    static const std::vector<int> exception_case_indexs;
+public:
+    static size_t run_count;
+    static Type run_type;
+    static int max_thread_count;
+
+    static size_t equation_count;
+    static double error_percentage;
+    static size_t exception_count; // <--- calculated!
+
+    using time_unit_t = std::chrono::microseconds;
+    static std::string time_unit;
+    static double time_ratio; // maybe uint.
+
+public:
+    static void initialize(int argc, char* argv[])
+    {
+        argh::parser cmdl(argc, argv);
+
+        // ***
+
+        cmdl({"rc", "run_count"}, 1) >> run_count;
+
+        run_type = Type::sequential;
+        std::string run_type_as_str;
+        cmdl({"rt", "run_type" }, "sequential") >> run_type_as_str;
+        if (string_equals(run_type_as_str, "parallel"))
+            run_type = Type::parallel;
+
+        cmdl({ "mtc", "max_thread_count" }, omp_get_max_threads()) >> max_thread_count;
+
+        cmdl({"ec", "equation_count" }, 1'000) >> equation_count;
+        cmdl({"ep", "error_percentage" }, 5.0) >> error_percentage;
+
+        cmdl({ "tu", "time_unit" }, "us") >> time_unit;
+        time_ratio = str_to_time_ratio(time_unit);
+
+        exception_count =
+            static_cast<size_t>(
+                std::round(error_percentage / 100 * equation_count));
+
+        // ***
+
+        exception_case_indexs =
+            build_exception_case_indexs();
+    }
+
+    static std::vector<int> exception_case_indexs;
     static const std::vector<int> build_exception_case_indexs() {
         if (exception_count == 0) {
             return {};
@@ -36,7 +93,7 @@ struct LaunchParams final
         result.reserve(exception_count);
         for (size_t i = 1; i <= exception_count; ++i) {
             result.push_back(
-                equation_count / i);
+                int(equation_count / i));
         }
         std::sort(result.begin(), result.end());
         return result;
@@ -47,22 +104,40 @@ struct LaunchParams final
             exception_case_indexs.begin(),
             exception_case_indexs.end(),
             index
-            );
+        );
     }
-
-    // ***
-
-    using time_unit = std::chrono::microseconds;
-    static constexpr char time_unit_name[] = "us";
 };
 
-const std::vector<int> LaunchParams::exception_case_indexs =
-    build_exception_case_indexs();
+size_t LaunchParams::run_count;
+LaunchParams::Type LaunchParams::run_type;
+int LaunchParams::max_thread_count;
+
+size_t LaunchParams::equation_count;
+double LaunchParams::error_percentage;
+size_t LaunchParams::exception_count; // <--- calculated!
+
+std::string LaunchParams::time_unit;
+double LaunchParams::time_ratio;
+
+std::vector<int> LaunchParams::exception_case_indexs;
+
 
 // utils
 // -----------------------------------------------------------------------
 
-bool isEqual(double a, double b, double eps = 0.00001) {
+std::string str_to_lower(std::string str) {
+    std::transform(str.begin(), str.end(), str.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+    return str;
+}
+
+bool string_equals(std::string lhs, std::string rhs) {
+    lhs = str_to_lower(lhs);
+    rhs = str_to_lower(rhs);
+    return lhs == rhs;
+}
+
+bool double_equals(double a, double b, double eps = 0.00001) {
     return abs(a - b) < eps;
 }
 
@@ -94,23 +169,23 @@ enum class FunctionType {
 std::vector<double> solve_correct_equation(double a, double b, double c) noexcept {
     assert(
         !(
-            isEqual(a, 0) &&
-            isEqual(b, 0) &&
-            isEqual(c, 0)
+            double_equals(a, 0) &&
+            double_equals(b, 0) &&
+            double_equals(c, 0)
             )
         );
 
-    if (isEqual(a, 0) && isEqual(b, 0)) {
+    if (double_equals(a, 0) && double_equals(b, 0)) {
         return std::vector<double>();
     }
 
-    if (isEqual(a,0)) {
+    if (double_equals(a,0)) {
         return std::vector<double>{ 0, -c / b };
     }
 
     const double discriminant = (b * b) - (4 * a * c);
 
-    if (isEqual(discriminant, 0)) {
+    if (double_equals(discriminant, 0)) {
         return std::vector<double>{ 0, -b / (2 * a) };
     }
     if (discriminant < 0) {
@@ -128,7 +203,7 @@ std::vector<double> solve_correct_equation(double a, double b, double c) noexcep
 std::vector<double> solve_no_exception(double a, double b, double c, bool& ok) noexcept {
     ok = true;
 
-    if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
+    if (double_equals(a, 0) && double_equals(b, 0) && double_equals(c, 0)) {
         ok = false;
         return std::vector<double>(0);
     }
@@ -137,7 +212,7 @@ std::vector<double> solve_no_exception(double a, double b, double c, bool& ok) n
 }
 
 std::vector<double> solve(double a, double b, double c) {
-    if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
+    if (double_equals(a, 0) && double_equals(b, 0) && double_equals(c, 0)) {
         throw std::logic_error("root is any value");
     }
 
@@ -145,7 +220,7 @@ std::vector<double> solve(double a, double b, double c) {
 }
 
 void solve_full_exception(double a, double b, double c) {
-    if (isEqual(a, 0) && isEqual(b, 0) && isEqual(c, 0)) {
+    if (double_equals(a, 0) && double_equals(b, 0) && double_equals(c, 0)) {
         throw std::logic_error("root is any value");
     }
 
@@ -221,10 +296,12 @@ std::map<FunctionType, std::vector<long long>> build_zero_results(const size_t n
 
 void println_one_result(const std::vector<long long>& vec, const std::string& title)
 {
-    const auto avg = std::accumulate(vec.begin(), vec.end(),
+    const double avg = std::accumulate(vec.begin(), vec.end(),
                                      0) / double(vec.size());
     std::cout << title << std::endl;
-    std::cout << "\t" << std::setprecision(25) << avg << std::endl;
+    std::cout << "\t" << std::setprecision(25)
+              << avg / LaunchParams::time_ratio
+              << std::endl;
 }
 
 void println_results(std::map<FunctionType, std::vector<long long>>& results)
@@ -234,9 +311,15 @@ void println_results(std::map<FunctionType, std::vector<long long>>& results)
     println_one_result(results[FunctionType::FullException], "Full exception");
 }
 
-long long run(size_t n, FunctionType type) noexcept;
+long long run_parallel(size_t n, FunctionType type) noexcept;
+long long run_sequential(size_t n, FunctionType type) noexcept;
 void some_runs(std::map<FunctionType, std::vector<long long>>& results) noexcept
 {
+    const auto run = LaunchParams::run_type == LaunchParams::sequential ?
+                         run_sequential : run_parallel;
+
+    // ***
+
     const auto n = LaunchParams::equation_count;
     for (size_t i = 0; i < LaunchParams::run_count; ++i) {
         results[FunctionType::NoException][i] = run(n, FunctionType::NoException);
@@ -245,7 +328,9 @@ void some_runs(std::map<FunctionType, std::vector<long long>>& results) noexcept
     }
 }
 
-long long run(size_t n, FunctionType type) noexcept {
+// -----------------------------------------------------------------------
+
+long long run_parallel(size_t n, FunctionType type) noexcept {
     using namespace std::chrono;
     const auto begin = steady_clock::now();
 
@@ -265,7 +350,50 @@ long long run(size_t n, FunctionType type) noexcept {
     return elapsed_us;
 }
 
+long long run_sequential(size_t n, FunctionType type) noexcept {
+    using namespace std::chrono;
+    const auto begin = steady_clock::now();
+
+    double sum{ 0 };
+    const int signed_n = static_cast<int>(n);
+
+    for (int i = 0; i < signed_n; i++) {
+        const auto [a, b, c] = generate_coeffs(i);
+        sum += call_solver(type, a, b, c);
+    }
+
+    const auto end = steady_clock::now();
+    const auto elapsed_us = duration_cast<microseconds>(end - begin).count();
+
+    static_cast<void>(sum);
+    return elapsed_us;
+}
+
+
 // -----------------------------------------------------------------------
+
+void println_launch_params();
+void println_about_openmp();
+
+int main(int argc, char* argv[]) {
+    LaunchParams::initialize(argc, argv);
+    omp_set_num_threads(LaunchParams::max_thread_count);
+
+    // ***
+
+    println_about_openmp();
+    println_launch_params();
+
+    // ***
+
+    auto results = build_zero_results(
+        LaunchParams::run_count);
+    some_runs(results);
+
+    // ***
+
+    println_results(results);
+}
 
 void println_about_openmp()
 {
@@ -282,29 +410,13 @@ void println_about_openmp()
 
 void println_launch_params()
 {
-    std::cout << "run count: " << LaunchParams::run_count << std::endl;
-    std::cout << "equation count: " << LaunchParams::equation_count << std::endl;
-    std::cout << "exception count: " << LaunchParams::exception_count << std::endl;
-
-    std::cout << "exceptions percentage: "
-              << double(LaunchParams::exception_count) /
-                     (LaunchParams::equation_count) * 100
-              << std::endl;
+    std::cout << "run_count: " << LaunchParams::run_count << std::endl;
+    std::cout << "run_type: " << LaunchParams::type_to_str(LaunchParams::run_type) << std::endl;
+    std::cout << "max_thread_count: " << LaunchParams::max_thread_count << std::endl;
+    std::cout << "equation_count: " << LaunchParams::equation_count << std::endl;
+    std::cout << "error_percentage: " << LaunchParams::error_percentage << std::endl;
+    std::cout << "exception_count: " << LaunchParams::exception_count << std::endl;
+    std::cout << "time_ratio: " << LaunchParams::time_ratio << std::endl;
+    std::cout << "time_unit: " << LaunchParams::time_unit << std::endl;
     std::cout << std::endl;
-}
-
-int main() {
-    println_about_openmp();
-    println_launch_params();
-
-    // ***
-
-    auto results = build_zero_results(LaunchParams::run_count);
-    some_runs(results);
-
-    // ***
-
-    std::cout << "time (" << LaunchParams::time_unit_name << ")"
-              << std::endl;
-    println_results(results);
 }
