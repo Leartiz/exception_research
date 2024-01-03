@@ -13,11 +13,7 @@ Edit launch script [here](./launch/main.py)
 
 ## Results
 
-### Program *cmd* [here](./program/cmd/main.cpp)
-- Results v0 [here](./measurements/cmd/v0/tables.md)
-- Results v1 [here](./measurements/cmd/v1/tables.md)
-
-### Program *cmd1* [here](./program/cmd/main.cpp)
+TODO:
 
 ## Experiments
 
@@ -47,3 +43,4 @@ Edit launch script [here](./launch/main.py)
 - Печальная правда о пропуске копий в C++ // Bright_Translate / URL: https://habr.com/ru/companies/ruvds/articles/551782/
 - Zero cost exception handling vs setjmp/longjmp // stackoverflow / URL: https://stackoverflow.com/questions/4975504/zero-cost-exception-handling-vs-setjmp-longjmp
 - Exception handling performance // janvorli / URL: https://github.com/dotnet/runtime/issues/77568?ysclid=lomh73ni1e5644794
+- Your One-Stop Solution for Variable Case Conversion // ConvertCase.dev / URL: https://convertcase.dev/

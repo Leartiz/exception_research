@@ -1,6 +1,6 @@
 TEMPLATE = app
 
-CONFIG += console c++17
+CONFIG += console c++14
 CONFIG -= app_bundle
 CONFIG -= qt
 
@@ -15,8 +15,16 @@ msvc:LIBS += -openmp
 msvc:message("msvc")
 
 SOURCES += \
-        main.cpp
+        main.cpp \
+        params.cpp \
+        solver.cpp \
+        utils.cpp
 
 INCLUDEPATH += \
     ../../dependency
+
+HEADERS += \
+    params.h \
+    solver.h \
+    utils.h
 

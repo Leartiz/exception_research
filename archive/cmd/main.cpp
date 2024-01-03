@@ -12,7 +12,7 @@
 
 #include "omp.h"
 
-struct LaunchParams final
+struct Params final
 {
     static const int run_count = 5;
     static const int equation_count = 5'000;
@@ -41,7 +41,7 @@ struct LaunchParams final
     }
 };
 
-const std::vector<int> LaunchParams::exception_case_indexs =
+const std::vector<int> Params::exception_case_indexs =
     build_exception_case_indexs();
 
 // utils
@@ -57,7 +57,7 @@ double sum_vec(const std::vector<double>& vec) {
 
 std::tuple<double, double, double>
 generate_coeffs(const long long index) {
-    if (!LaunchParams::is_exception_case_index(index)) {
+    if (!Params::is_exception_case_index(index)) {
         return {
             ((index % 2000) - 1000) / 33.0,
             ((index % 200) - 100) / 22.0,
@@ -198,8 +198,8 @@ double call_solver(FunctionType type, double a, double b, double c) noexcept {
 long long run(long long n, FunctionType type) noexcept;
 void some_runs(std::map<FunctionType, std::vector<long long>>& results) noexcept
 {
-    const auto n = LaunchParams::equation_count;
-    for (int i = 0; i < LaunchParams::run_count; ++i) {
+    const auto n = Params::equation_count;
+    for (int i = 0; i < Params::run_count; ++i) {
         long long elapsed_us{ 0 };
 
         elapsed_us = run(n, FunctionType::NoException);
@@ -249,20 +249,20 @@ int main() {
     println_about_openmp();
 
     std::map<FunctionType, std::vector<long long>> results;
-    results[FunctionType::Normal].reserve(LaunchParams::run_count);
-    results[FunctionType::NoException].reserve(LaunchParams::run_count);
-    results[FunctionType::FullException].reserve(LaunchParams::run_count);
+    results[FunctionType::Normal].reserve(Params::run_count);
+    results[FunctionType::NoException].reserve(Params::run_count);
+    results[FunctionType::FullException].reserve(Params::run_count);
 
     // ***
-
-    const auto n = LaunchParams::equation_count;
+    
+    const auto n = Params::equation_count;
     some_runs(results);
 
     // ***
     
-    std::cout << "run_count: " << LaunchParams::run_count << std::endl;
-    std::cout << "equation_count: " << LaunchParams::equation_count << std::endl;
-    std::cout << "exception_count: " << LaunchParams::exception_count << std::endl;
+    std::cout << "run_count: " << Params::run_count << std::endl;
+    std::cout << "equation_count: " << Params::equation_count << std::endl;
+    std::cout << "exception_count: " << Params::exception_count << std::endl;
 
     std::cout << "n\ttime (us)" << std::endl;
 
